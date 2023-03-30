@@ -11,6 +11,6 @@
   },
   "postgresql": {
     "client": "pg",
-    "connection": "postgres://username:password@dbhost:5432/dbname"
+    "connection": "postgres://coinrates:DB_PASSWORD@localhost:5432/coinrates"
   }
 }
