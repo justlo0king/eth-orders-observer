@@ -39,5 +39,6 @@ yarn dev # development mode
 yarn bundle:client # creating a bundle
 yarn start # running a bundle
 ```
+4. If you are testing it on localhost - open http://localhost:5173/ in browser.
 
 ### More info can be found in `api/README.md` and `client/README.md`
