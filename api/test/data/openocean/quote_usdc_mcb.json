@@ -1,0 +1,226 @@
+{
+  "code": 200,
+  "data": {
+    "inToken": {
+      "symbol": "USDC",
+      "name": "USD Coin",
+      "address": "0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48",
+      "decimals": 6
+    },
+    "outToken": {
+      "symbol": "MCB",
+      "name": "MCDEX Token",
+      "address": "0x4e352cf164e64adcbad318c3a1e222e9eba4ce42",
+      "decimals": 18
+    },
+    "inAmount": "10000000",
+    "outAmount": "1200432048036217310",
+    "estimatedGas": "291065",
+    "dexes": [
+      {
+        "dexIndex": 0,
+        "dexCode": "UniswapV2",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 1,
+        "dexCode": "SushiSwap",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 3,
+        "dexCode": "Aave",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 4,
+        "dexCode": "AaveV2",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 5,
+        "dexCode": "UniswapV3",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 6,
+        "dexCode": "Curve",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 7,
+        "dexCode": "BalancerV2",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 9,
+        "dexCode": "ShibaSwap",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 10,
+        "dexCode": "DODOv2",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 11,
+        "dexCode": "1Inch",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 12,
+        "dexCode": "DeFiSwap",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 14,
+        "dexCode": "Synapse",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 15,
+        "dexCode": "Swapr",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 17,
+        "dexCode": "CurveV2",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 18,
+        "dexCode": "ClipperRFQ",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 19,
+        "dexCode": "DFX",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 20,
+        "dexCode": "Hashflow",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 22,
+        "dexCode": "BancorV2",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 23,
+        "dexCode": "BancorV3",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 24,
+        "dexCode": "PMM1",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 25,
+        "dexCode": "SynthetixAtomic",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 26,
+        "dexCode": "PSM",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 27,
+        "dexCode": "FraxFinance",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 28,
+        "dexCode": "Verse",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 29,
+        "dexCode": "PancakeV2",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 30,
+        "dexCode": "Saddle",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 32,
+        "dexCode": "Ankr",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 33,
+        "dexCode": "Lido",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 34,
+        "dexCode": "RocketPool",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 35,
+        "dexCode": "StakeWise",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 37,
+        "dexCode": "FraxStaking",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 38,
+        "dexCode": "AaveV3",
+        "swapAmount": "0"
+      },
+      {
+        "dexIndex": 39,
+        "dexCode": "Solidly",
+        "swapAmount": "0"
+      }
+    ],
+    "path": {
+      "from": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+      "to": "0x4e352cF164E64ADCBad318C3a1e222E9EBa4Ce42",
+      "parts": 10,
+      "routes": [
+        {
+          "parts": 10,
+          "percentage": 100,
+          "subRoutes": [
+            {
+              "from": "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48",
+              "to": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+              "parts": 20,
+              "dexes": [
+                {
+                  "dex": "Verse",
+                  "parts": 20,
+                  "percentage": 100
+                }
+              ]
+            },
+            {
+              "from": "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2",
+              "to": "0x4e352cF164E64ADCBad318C3a1e222E9EBa4Ce42",
+              "parts": 20,
+              "dexes": [
+                {
+                  "dex": "UniswapV3",
+                  "parts": 20,
+                  "percentage": 100
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "useTime": 475,
+    "save": 1.2004
+  }
+}
