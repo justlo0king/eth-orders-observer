@@ -37,7 +37,7 @@
   "scripts": {
     "dev": "nodemon -x ts-node src/index.ts",
     "compile": "shx rm -rf lib/ && tsc --skipLibCheck",
-    "start": "sleep 5 && npm run migrate && node lib/",
+    "start": "node lib/",
     "prettier": "npx prettier \"**/*.ts\" --write",
     "test": "jest --verbose",
     "bundle:client": "npm run compile && npm pack --pack-destination ./public",
