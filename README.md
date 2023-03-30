@@ -8,7 +8,7 @@ docker-compose up -d
 ```
 
 ### Running API:
-1. Copy `api/config/default.json.example` to `api/config/default.json` and review it to set DB credentials.
+1. Copy `api/config/default.json.example` to `api/config/default.json` and review it to set DB credentials (just copy is enough for testing on localhost).
 2. Install NPM modules:
 ```
 cd api
@@ -27,7 +27,7 @@ yarn start # running bundle
 ```
 
 ### Running frontend:
-1. Review `client/src/config/api.json` in order to change API instance location.
+1. Review `client/src/config/api.json` in order to change API instance location. Skip it for testing on localhost.
 2. Install NPM modules:
 ```
 cd client
