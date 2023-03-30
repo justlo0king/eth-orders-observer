@@ -41,4 +41,12 @@ yarn start # running a bundle
 ```
 4. If you are testing it in development mode - open http://localhost:5173/ in browser.
 
+### Running tests:
+```
+cd api
+yarn test test/modules/1inch-ws.spec.ts # testing 1inch module
+yarn test test test/modules/openocean.spec.ts # testing openocean module
+yarn test # running all tests
+```
+
 ### More info can be found in `api/README.md` and `client/README.md`
