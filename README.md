@@ -46,6 +46,10 @@ yarn start # running a bundle
 cd api
 yarn test test/modules/1inch-ws.spec.ts # testing 1inch module
 yarn test test test/modules/openocean.spec.ts # testing openocean module
+
+yarn test test/modules/openocean.spec.ts # testing openocean module with mock data
+
+SEND_REQUESTS=1 yarn test test/modules/openocean.spec.ts # testing openocean module with real requests
 yarn test # running all tests
 ```
 
