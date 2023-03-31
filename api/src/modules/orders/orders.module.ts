@@ -4,8 +4,8 @@ import { Orders, OrdersData, OrdersPatch } from '../../services/orders/orders.sc
 import { OneInchOrdersResponse, OneInchApi, ActiveOrder, OneInchToken } from '../1inch/1inch.api';
 import { OpenOceanClient } from '../openocean/openocean.api';
 
-const EFFICIENCY_THRESHOLD = process.env.EFFICIENCY_THRESHOLD ?? 0;
-const RECALCULATE_TIMEOUT = process.env.RECALCULATE_TIMEOUT ?? 5000;
+const EFFICIENCY_THRESHOLD = Number(process.env.EFFICIENCY_THRESHOLD ?? 0);
+const RECALCULATE_TIMEOUT = Number(process.env.RECALCULATE_TIMEOUT ?? 5000)
 
 export class OrdersInspector extends EventEmitter {
   private app: Application;
