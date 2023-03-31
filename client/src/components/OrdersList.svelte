@@ -1,17 +1,12 @@
 <script lang="ts">
 	import { DataTable, InlineLoading, InlineNotification, Tooltip } from "carbon-components-svelte";
+	import type { DataTableHeader } from "carbon-components-svelte/types/DataTable/DataTable.svelte";
   import type { OrdersData } from "../../types/services/orders/orders.class";
 
   export let orders: OrdersData[] = [];
   export let title: string = '';
-</script>
-
-{#if title}
-  <h2>{title}</h2>
-{/if}
-
-<DataTable
-  headers={[
+  export let rowKeyPrefix: string = '';
+  export let columns: DataTableHeader[] = [
     { key: "order_hash", value: "Hash" },
     { key: "pair", value: "Pair" },
     { key: "making_amount", value: "Making amount" },
@@ -21,10 +16,19 @@
     { key: "margin", value: "Margin" },
     { key: "efficiency_with_gas", value: "Efficiency" },
     { key: "created_at", value: "Created" },
-  ]}
+  ];
+</script>
+
+{#if title}
+  <h2>{title}</h2>
+{/if}
+
+<DataTable
+  headers={columns}
   rows={orders.map((order) => {
     return {
       ...order,
+      id: `${rowKeyPrefix}${order.id}`,
       making_amount: Number(order.making_amount) * Math.pow(10, -1 * order.making_decimals),
       taking_amount: Number(order.taking_amount) * Math.pow(10, -1 * order.taking_decimals),
       quoted_amount: Number(order.quoted_amount) * Math.pow(10, -1 * order.taking_decimals),
@@ -35,7 +39,7 @@
     }
   })}>
   <svelte:fragment slot="cell" let:row let:cell>
-    {#if cell.key === 'order_hash'}
+    {#if cell.value && (cell.key === 'order_hash' || cell.key === 'last_event')}
       <Tooltip align="start">
         <p>{cell.value}</p>
       </Tooltip>

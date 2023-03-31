@@ -27,7 +27,7 @@ describe(`OpenOcean`, () => {
     await ooClient.requestTokens('eth');
     if (!SEND_REQUESTS) expect(axios.get).toBeCalledTimes(1);
     expect(Object.keys(ooClient.tokens.eth).length).toBeGreaterThan(0);
-  });
+  }, SEND_REQUESTS ? 30000 : 5000);
 
   it(`should request rates`, async () => {
     if (!SEND_REQUESTS) {

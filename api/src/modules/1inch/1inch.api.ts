@@ -1,5 +1,7 @@
 import EventEmitter from 'events';
-import { WebSocketApi, NetworkEnum } from '@1inch/fusion-sdk';
+import {
+  WebSocketApi, NetworkEnum, AuctionCalculator, LimitOrderV3Struct
+} from '@1inch/fusion-sdk';
 import { ActiveOrder } from '@1inch/fusion-sdk/api/orders'
 import { PaginationOutput } from '@1inch/fusion-sdk/api/types';
 import { OrderEventType, Event } from '@1inch/fusion-sdk/ws-api/types';
@@ -84,5 +86,15 @@ export class OneInchApi extends EventEmitter {
   private _tokensByAddress: Record<string, OneInchToken> = {};
   get tokensByAddress() {
     return this._tokensByAddress;
+  }
+
+  public recalculate(order:LimitOrderV3Struct) {
+    const calculator = AuctionCalculator.fromLimitOrderV3Struct(order);
+    const rate = calculator.calcRateBump(Math.round(Date.now()/1000));    
+    const auctionTakingAmount = calculator.calcAuctionTakingAmount(
+      order.takingAmount,
+      rate
+    );
+    return auctionTakingAmount;
   }
 }

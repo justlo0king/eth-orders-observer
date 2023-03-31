@@ -38,8 +38,8 @@ export class OpenOceanClient {
   }
 
   public async quote(makerSymbol:string, takerSymbol:string, amount: number|string) {
-    const makerToken = this._tokens.eth[makerSymbol];
-    const takerToken = this._tokens.eth[takerSymbol];
+    const makerToken = this._tokens.eth && this._tokens.eth[makerSymbol];
+    const takerToken = this._tokens.eth && this._tokens.eth[takerSymbol];
     if (!makerToken) {
       throw new Error(`makerToken not found: ${makerSymbol}`);
     }

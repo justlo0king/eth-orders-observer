@@ -1,9 +1,11 @@
 import EventEmitter from 'events';
 import { Application } from '../../declarations';
-import { OneInchOrdersResponse, OneInchApi, ActiveOrder, OneInchToken } from '../1inch/1inch.wsclient';
-import { OpenOceanClient } from '../openocean/client';
+import { Orders, OrdersData, OrdersPatch } from '../../services/orders/orders.schema';
+import { OneInchOrdersResponse, OneInchApi, ActiveOrder, OneInchToken } from '../1inch/1inch.api';
+import { OpenOceanClient } from '../openocean/openocean.api';
 
-const EFFICIENCY_THRESHOLD = process.env.EFFICIENCY_THRESHOLD ?? 10;
+const EFFICIENCY_THRESHOLD = process.env.EFFICIENCY_THRESHOLD ?? 0;
+const RECALCULATE_TIMEOUT = 5000;
 
 export class OrdersInspector extends EventEmitter {
   private app: Application;
@@ -21,7 +23,7 @@ export class OrdersInspector extends EventEmitter {
   public init() {
     this.oneInch.init();
     this.oneInch.on('getActiveOrders', async (data:OneInchOrdersResponse) => {
-      console.log(`orders.init: active orders:`, data);
+      console.log(`orders.init: active orders: ${data.items?.length}`);
       const { items } = data;
       const promises: Promise<void>[] = items.map((orderData) => {
         return this.onOrderCreated(orderData);
@@ -35,24 +37,26 @@ export class OrdersInspector extends EventEmitter {
 
     this.oneInch.on('order', async (data:any) => {
       const { event, result } = data;
-      console.log(`orders.init: order event: ${event}, result:`, result);
+      console.log(`orders.init: order event: ${event}, orderHash: ${result.orderHash.substr(0, 5)}...${result.orderHash.substr(-5)}`);
       switch(event) {
         case 'order_created':
           return this.onOrderCreated(result);
         case 'order_filled':
         case 'order_filled_partially':
         case 'order_invalid':
-        case 'order_balance_or_allowance_change':
-          return this.removeIfNotSelected(result.orderHash);
+        case 'order_balance_or_allowance_change':          
+          return this.removeIfNotSelected(result.orderHash, event);
       }
     });
     this.oneInch.on('error', (error) => {
       console.error(`oneInch error:`, error);
     });
 
-    // requesting coin addresses
     setTimeout(async() => {
+      // requesting coin addresses
       await this.loadTokens();
+      // removing old orders in db
+      await this.app.service('orders').remove(null);
       this.loadOrders();
     }, 1000);
   }
@@ -75,8 +79,8 @@ export class OrdersInspector extends EventEmitter {
       await Promise.all(promises);
       console.log(`tokens loaded`);
     } catch(error) {
-      this.emit('error', { code: 502, message: 'failed to load tokens', context });
       console.error(`OrdersInspector.loadTokens: failed to load tokens, error:`, error);
+      this.emit('error', { code: 502, message: 'failed to load tokens', context });
     }
   }
 
@@ -98,7 +102,7 @@ export class OrdersInspector extends EventEmitter {
       results[pair] = { inAmount, outAmount, estimatedGas };
     });
     await Promise.all(promises);
-    console.log(`orders.getQuote: results:`, results);
+    //console.log(`orders.getQuote: results:`, results);
     return results;
   }
 
@@ -120,7 +124,10 @@ export class OrdersInspector extends EventEmitter {
   private async onOrderCreated(data:ActiveOrder): Promise<void> {
     const { 
       orderHash, 
-      order: { makerAsset, takerAsset, makingAmount, takingAmount }
+      order: { 
+        makerAsset, takerAsset, makingAmount, takingAmount, allowedSender,
+        interactions, maker, offsets, receiver, salt,
+      }
     } = data;
 
     const makerToken = this.oneInch.tokensByAddress[makerAsset];
@@ -142,34 +149,110 @@ export class OrdersInspector extends EventEmitter {
 
     let { outAmount:gasPrice } = quotesByPair && quotesByPair[`ETH-${takerToken.symbol}`] || {};
     if (takerToken.symbol == 'ETH') {
-      // compared with 1 million gwei
+      // got price of 1 million gwei in taker coin to compare later with estimatedGas
+      // but in ETH there is no comparison needed
       gasPrice = 1000000;
     }
+
     const gasCost = Number(estimatedGas) / 1000000 * Number(gasPrice);
-    const gasCostNum = Number(gasCost) * Math.pow(10, -1*takerToken.decimals);
-    const takingAmountNum = Number(takingAmount) * Math.pow(10, -1*takerToken.decimals);
-    const outAmountNum = Number(outAmount) * Math.pow(10, -1 * takerToken.decimals);
-    const margin = (outAmountNum - takingAmountNum) * Math.pow(10, takerToken.decimals);
-    const efficiency = Math.round((outAmountNum - takingAmountNum) / takingAmountNum * 100 * 100) / 100;
-    const efficiencyWithGas = Math.round((outAmountNum - takingAmountNum - gasCostNum) / takingAmountNum * 100 * 100) / 100;
-    const is_selected = Boolean(efficiencyWithGas > EFFICIENCY_THRESHOLD);
-    
-    await this.app.service('orders').create({
+
+    let payload: OrdersData = {
       order_hash: orderHash,
       pair,
+      maker_asset: makerAsset,
+      taker_asset: takerAsset,
       making_amount: String(makingAmount),
       making_decimals: makerToken.decimals,
       taking_amount: String(takingAmount),
+      taking_amount_initial: String(takingAmount),
       taking_decimals: takerToken.decimals,
       quoted_amount: String(outAmount),
       estimated_gas: String(estimatedGas),
       estimated_gas_taking: String(gasCost),
+      allowed_sender: allowedSender,
+      interactions,
+      maker,
+      offsets,
+      receiver,
+      salt,
+      is_active: true,
+      // those values will be rewritten by getEfficiency
+      efficiency: 0,
+      efficiency_with_gas: 0,
+      margin: '',
+      is_selected: false,
+      last_event: '',
+    };
+
+    payload = {
+      ...payload,
+      ...this.getEfficiency(payload)
+    };
+
+    try {
+      const order = await this.app.service('orders').create(payload);
+
+      if (order && order.id) {
+        setTimeout(() => {
+          this.updateActiveOrder(order.id);
+        }, RECALCULATE_TIMEOUT);
+      }
+    } catch(error) {
+      console.error(`orders.onOrderCreated: failed to save order:`, payload, `, error:`, (error as any).message);
+    }
+  }
+
+  private async updateActiveOrder(orderId:number) {
+    try {
+      const order = await this.app.service('orders').get(orderId);
+      if (!order || !order.is_active) {
+        return;
+      }
+      const updatedAmount = this.oneInch.recalculate({
+        allowedSender: order.allowed_sender,
+        interactions: order.interactions,
+        maker: order.maker,
+        makerAsset: order.maker_asset,
+        makingAmount: order.making_amount,
+        offsets: order.offsets,
+        receiver: order.receiver,
+        salt: order.salt,
+        takerAsset: order.taker_asset,
+        takingAmount: order.taking_amount,
+      });
+
+      if (updatedAmount != order.taking_amount) {
+        const payload: OrdersPatch = this.getEfficiency({
+          ...order,
+          taking_amount: updatedAmount,
+        });
+
+        this.app.service('orders').patch(orderId, {
+          ...payload,
+          taking_amount: payload.taking_amount,
+        });
+      }
+      setTimeout(() => this.updateActiveOrder(orderId), RECALCULATE_TIMEOUT);
+    } catch(error) {
+      // order could be already removed
+    }
+  }
+
+  private getEfficiency(order: OrdersData) {
+    const takingAmountNum = Number(order.taking_amount) * Math.pow(10, -1 * order.taking_decimals);
+    const gasCostNum = Number(order.estimated_gas_taking) * Math.pow(10, -1 * order.taking_decimals);
+    const outAmountNum = Number(order.quoted_amount) * Math.pow(10, -1 * order.taking_decimals);
+    const margin = (outAmountNum - takingAmountNum) * Math.pow(10, order.taking_decimals);
+    const efficiency = Math.round((outAmountNum - takingAmountNum) / takingAmountNum * 100 * 100) / 100;
+    const efficiencyWithGas = Math.round((outAmountNum - takingAmountNum - gasCostNum) / takingAmountNum * 100 * 100) / 100;
+    const is_selected = Boolean(efficiencyWithGas > EFFICIENCY_THRESHOLD);
+
+    return {
       efficiency: efficiency,
       efficiency_with_gas: efficiencyWithGas,
       margin: String(margin),
       is_selected,
-      is_active: true,
-    });
+    };
   }
 
   /**
@@ -209,7 +292,7 @@ export class OrdersInspector extends EventEmitter {
    * removes or sets an order inactive (if it was selected)
    * @param orderHash string
    */
-  private async removeIfNotSelected(orderHash:string): Promise<void> {
+  private async removeIfNotSelected(orderHash:string, event:string): Promise<void> {
     const orders = await this.app.service('orders').find({
       query: { order_hash: orderHash, is_active: true }
     });
@@ -217,7 +300,7 @@ export class OrdersInspector extends EventEmitter {
     if (order) {
       if (order.is_selected) {
         // setting order inactive
-        await this.app.service('orders').patch(order.id, { is_active: false });
+        await this.app.service('orders').patch(order.id, { is_active: false, last_event: event });
       } else {
         // removing order
         await this.app.service('orders').remove(order.id);

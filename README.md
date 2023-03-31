@@ -49,4 +49,8 @@ yarn test test test/modules/openocean.spec.ts # testing openocean module
 yarn test # running all tests
 ```
 
+### Constants used in API (can be passed through process environment):
+RECALCULATE_TIMEOUT - timeout to recalculate order taking amount (ms), default is 5000
+EFFICIENCY_THRESHOLD - percentage of efficiency passed to make order "selected", default is 0
+
 ### More info can be found in `api/README.md` and `client/README.md`

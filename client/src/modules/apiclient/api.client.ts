@@ -25,12 +25,14 @@ export function createClient(params:any={}) {
 
   client.configure(socketio(socket));
   socket.on('connect', async () => {
-    console.log(`connected`);
     await Promise.all([
       loadOrders(ordersStore, { is_active: true, $limit: 100, $sort: { created_at: -1 }}),
       loadOrders(selectedOrdersStore, { is_selected: true, $limit: 5, $sort: { created_at: -1 }}),
     ]);
   });
+  socket.on('error', (error) => {
+    console.error(`apiClient: connection error:`, error);
+  })
 
   const ordersService = initOrders(client);
 }

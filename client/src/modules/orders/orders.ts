@@ -21,9 +21,8 @@ selectedOrdersStore.subscribe((_selectedOrders) => {
 export function initOrders(client: Application) {
   const ordersService = client.service('orders')
 
-  ordersService.on('created', (orderData: OrdersData) => {
+  const orderCreated = (orderData: OrdersData) => {
     if (orderData.is_selected === true) {
-      console.log(`adding order to selected:`, orderData);
       selectedOrdersStore.set([
         orderData,
         ...selectedOrders,
@@ -34,18 +33,61 @@ export function initOrders(client: Application) {
       orderData,
       ...orders,
     ]);
-  });
+  };
 
-  ordersService.on('patched', (orderData: OrdersData) => {
+  const orderPatched = (orderData: OrdersData) => {
+    let selectedOrderIndex = -1;
+    let selectedRemoved = false;
+
     if (!orderData.is_active) {
+      // removing order from active
       const ordersFiltered = orders.filter((order) => order.id != orderData.id);
       if (ordersFiltered.length != orders.length) {
         ordersStore.set(ordersFiltered);
       }
-    }
-  });
+      selectedOrderIndex = selectedOrders.findIndex((order) => order.id == orderData.id);
+      if (selectedOrderIndex != -1) {
+        if (orderData.is_selected) {
+          // updating data
+          selectedOrders[selectedOrderIndex] = orderData;
+        } else {
+          // not selected anymore, removing
+          selectedOrders.splice(selectedOrderIndex, 1);
+          selectedRemoved = true;
+        }
+        selectedOrdersStore.set(selectedOrders);
+      }
+    } else {
+      // updating list of selected orders
+      selectedOrderIndex = selectedOrders.findIndex((order) => order.id == orderData.id);
+      if (selectedOrderIndex != -1) {
+        if (orderData.is_selected) {
+          // updating data
+          selectedOrders[selectedOrderIndex] = orderData;
+        } else {
+          // not selected anymore, removing
+          selectedOrders.splice(selectedOrderIndex, 1);
+          selectedRemoved = true;
+        }
+        selectedOrdersStore.set(selectedOrders);
+      }
 
-  ordersService.on('removed', (orderData: OrdersData) => {
+      // updating list of active orders
+      const orderIndex = orders.findIndex((order) => order.id == orderData.id);
+      if (orderIndex != -1) {
+        orders[orderIndex] = orderData;
+        ordersStore.set(orders);
+      } else {
+        if (selectedRemoved) {
+          orders.push(orderData);
+          orders.sort((a, b) => { if (a.created_at > b.created_at) { return -1; } else if (b > a) { return 1; } else { return 0 }; })
+          ordersStore.set(orders);
+        }
+      }
+    }
+  };
+
+  const orderRemoved = (orderData: OrdersData) => {
     const ordersFiltered = orders.filter((order) => order.id != orderData.id);
     if (ordersFiltered.length != orders.length) {
       ordersStore.set(ordersFiltered);
@@ -54,7 +96,10 @@ export function initOrders(client: Application) {
     if (selectedOrdersFiltered.length != selectedOrders.length) {
       selectedOrdersStore.set(selectedOrdersFiltered);
     }
-  });
+  };
 
+  ordersService.on('created', orderCreated);
+  ordersService.on('patched', orderPatched);
+  ordersService.on('removed', orderRemoved);
   return ordersService;
 }
