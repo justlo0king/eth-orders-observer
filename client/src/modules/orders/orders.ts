@@ -1,6 +1,7 @@
 import { writable, type Writable } from "svelte/store";
 import type { Application } from "../../../types/declarations";
 import type { OrdersData } from "../../../types/services/orders/orders.class";
+import { client } from '../apiclient/api.client';
 
 export const ordersStore: Writable<OrdersData[]> = writable([]);
 export const selectedOrdersStore: Writable<OrdersData[]> = writable([]);
@@ -12,11 +13,38 @@ ordersStore.subscribe((_orders) => {
   orders = _orders;
 });
 
+let ordersTotal: number = 0;
+export const ordersTotalStore = writable(0);
+ordersTotalStore.subscribe((value) => {
+  ordersTotal = value;
+});
+
+
 let selectedOrders: OrdersData[] = [];
 selectedOrdersStore.subscribe((_selectedOrders) => {
   selectedOrders = _selectedOrders;
 });
 
+let selectedOrdersTotal: number = 0;
+export const selectedOrdersTotalStore = writable(0);
+selectedOrdersTotalStore.subscribe((value) => {
+  selectedOrdersTotal = value;
+});
+
+
+export const loadOrders = async (store:Writable<unknown>, totalStore:Writable<number>, query={}) => {
+  const orders = await client.service('orders').find({
+    query
+  });
+  if (orders?.data) {
+    store.set(orders.data);
+  }
+  console.log(`orders: total: ${orders.total}, skip: ${orders.skip}`);
+  if (orders.total !== undefined) {
+    totalStore.set(orders.total);
+  }
+  return orders;
+}
 
 export function initOrders(client: Application) {
   const ordersService = client.service('orders')
@@ -34,6 +62,7 @@ export function initOrders(client: Application) {
       ...orders,
     ]);
   };
+
 
   const orderPatched = (orderData: OrdersData) => {
     let selectedOrderIndex = -1;

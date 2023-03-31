@@ -1,6 +1,7 @@
 <script lang="ts">
-	import { DataTable, InlineLoading, InlineNotification, Tooltip } from "carbon-components-svelte";
+	import { Column, DataTable, Grid, InlineLoading, InlineNotification, Pagination, Row, Tooltip } from "carbon-components-svelte";
 	import type { DataTableHeader } from "carbon-components-svelte/types/DataTable/DataTable.svelte";
+	import type { Writable } from "svelte/store";
   import type { OrdersData } from "../../types/services/orders/orders.class";
 
   export let orders: OrdersData[] = [];
@@ -17,11 +18,37 @@
     { key: "efficiency_with_gas", value: "Efficiency" },
     { key: "created_at", value: "Created" },
   ];
+  export let pagination: boolean = false;
+  export let totalStore: Writable<number>;
+
+	let total: number = 0;
+  if (totalStore) {
+    totalStore.subscribe((value) => {
+      total = value;
+    });
+  }
 </script>
 
-{#if title}
-  <h2>{title}</h2>
-{/if}
+<Grid>
+  <Row>
+    <Column>
+      {#if title}
+        <h2>{title}</h2>
+      {/if}
+    </Column>
+    <Column>
+      {#if pagination}
+        <Pagination 
+          page={1}
+          totalItems={total}
+          pageSize={5}
+          pageSizes={[5]}
+          on:change
+          />
+      {/if}
+    </Column>
+  </Row>
+</Grid>
 
 <DataTable
   headers={columns}
