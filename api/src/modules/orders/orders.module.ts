@@ -5,7 +5,7 @@ import { OneInchOrdersResponse, OneInchApi, ActiveOrder, OneInchToken } from '..
 import { OpenOceanClient } from '../openocean/openocean.api';
 
 const EFFICIENCY_THRESHOLD = process.env.EFFICIENCY_THRESHOLD ?? 0;
-const RECALCULATE_TIMEOUT = 5000;
+const RECALCULATE_TIMEOUT = process.env.RECALCULATE_TIMEOUT ?? 5000;
 
 export class OrdersInspector extends EventEmitter {
   private app: Application;
